@@ -15,6 +15,7 @@
 #include <string>
 
 #include "defines.h"
+#include "math/vector.h"
 
 template <typename T>
 const std::vector<std::string> choice_strings();
@@ -92,6 +93,8 @@ struct Settings {
     bool local_seam_leveling = true;
     bool hole_filling = true;
     bool keep_unseen_faces = false;
+
+    math::Vec3f fill_color;
 };
 
 TEX_NAMESPACE_END

@@ -592,6 +592,17 @@ generate_texture_patches(UniGraph const & graph, mve::TriangleMesh::ConstPtr mes
 
     merge_vertex_projection_infos(vertex_projection_infos);
 
+    if (!settings.local_seam_leveling) {
+        for (TexturePatch::Ptr patch : *texture_patches) {
+            if (patch->get_label() == 0) {
+                mve::FloatImage::Ptr patch_image = patch->get_image();
+                if (patch_image) {
+                    patch_image->fill_color(&settings.fill_color[0]);
+                }
+            }
+        }
+    }
+
     std::cout << "done. (Took " << timer.get_elapsed_sec() << "s)" << std::endl;
     std::cout << "\t" << num_patches << " texture patches." << std::endl;
 }

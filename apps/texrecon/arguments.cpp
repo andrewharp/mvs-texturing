@@ -7,8 +7,10 @@
  * of the BSD 3-Clause license. See the LICENSE.txt file for details.
  */
 
+#include <iostream>
 #include "arguments.h"
 #include "util/file_system.h"
+#include "math/vector.h"
 
 #define SKIP_GLOBAL_SEAM_LEVELING "skip_global_seam_leveling"
 #define SKIP_GEOMETRIC_VISIBILITY_TEST "skip_geometric_visibility_test"
@@ -18,6 +20,7 @@
 #define SKIP_HOLE_FILLING "skip_hole_filling"
 #define KEEP_UNSEEN_FACES "keep_unseen_faces"
 #define NUM_THREADS "num_threads"
+#define FILL_COLOR "fill_color"
 
 Arguments parse_args(int argc, char **argv) {
     util::Arguments args;
@@ -71,6 +74,8 @@ Arguments parse_args(int argc, char **argv) {
         "Tone mapping method: {" +
         choices<tex::ToneMapping>() +  "} [" +
         choice_string<tex::ToneMapping>(tex::TONE_MAPPING_NONE) + "]");
+    args.add_option('f', FILL_COLOR, true,
+        "Fill color for unseen faces and holes, format: R,G,B in [0,1] [0,0,0]");
     args.add_option('v',"view_selection_model", false,
         "Write out view selection model [false]");
     args.add_option('\0', SKIP_GEOMETRIC_VISIBILITY_TEST, false,
@@ -103,6 +108,7 @@ Arguments parse_args(int argc, char **argv) {
     conf.write_timings = false;
     conf.write_intermediate_results = true;
     conf.write_view_selection_model = false;
+    conf.settings.fill_color = math::Vec3f(0.0f, 0.0f, 0.0f);
 
     conf.num_threads = -1;
 
@@ -130,6 +136,22 @@ Arguments parse_args(int argc, char **argv) {
         break;
         case 't':
             conf.settings.tone_mapping = parse_choice<tex::ToneMapping>(i->arg);
+        break;
+        case 'f':
+            {
+                std::stringstream ss(i->arg);
+                std::string r, g, b;
+                std::getline(ss, r, ',');
+                std::getline(ss, g, ',');
+                std::getline(ss, b, ',');
+                try {
+                    conf.settings.fill_color[0] = std::stof(r);
+                    conf.settings.fill_color[1] = std::stof(g);
+                    conf.settings.fill_color[2] = std::stof(b);
+                } catch (std::exception& e) {
+                    throw std::invalid_argument("Invalid fill color format. Expected R,G,B in [0,1]");
+                }
+            }
         break;
         case '\0':
             if (i->opt->lopt == SKIP_GEOMETRIC_VISIBILITY_TEST) {
@@ -173,6 +195,7 @@ Arguments::to_string(){
         << "Output prefix: \t" << out_prefix << std::endl
         << "Datacost file: \t" << data_cost_file << std::endl
         << "Labeling file: \t" << labeling_file << std::endl
+        << "Fill color: \t" << settings.fill_color[0] << "," << settings.fill_color[1] << "," << settings.fill_color[2] << std::endl
         << "Data term: \t" << choice_string<tex::DataTerm>(settings.data_term) << std::endl
         << "Smoothness term: \t" << choice_string<tex::SmoothnessTerm>(settings.smoothness_term) << std::endl
         << "Outlier removal method: \t" << choice_string<tex::OutlierRemoval>(settings.outlier_removal) << std::endl
